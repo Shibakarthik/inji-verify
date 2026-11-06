@@ -3,6 +3,7 @@ package io.inji.verify.services.impl;
 import io.inji.verify.dto.verification.*;
 import io.inji.verify.exception.CredentialStatusCheckException;
 import io.inji.verify.utils.Utils;
+import io.inji.verify.trustregistry.TrustRegistryService;
 import io.mosip.pixelpass.PixelPass;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
 import io.mosip.vercred.vcverifier.constants.CredentialFormat;
@@ -26,6 +27,7 @@ public class VCVerificationServiceImplTest {
     static VCVerificationServiceImpl service;
     static CredentialsVerifier mockCredentialsVerifier;
     static PixelPass mockPixelPass;
+    static TrustRegistryService mockTrustRegistryService;
     private final String TEST_CWT_VC_STRING = "abcabcabcabcabacabac";
     private final String TEST_JSON_VC_STRING = "{\"credentialSubject\":{},\"type\":[\"VerifiableCredential\",\"MockVerifiableCredential\"],\"credentialStatus\":{},\"proof\":{}}";
     private final String TEST_SDJWT_VC_STRING = "abcdabcdabcdabcdabcd";
@@ -33,7 +35,9 @@ public class VCVerificationServiceImplTest {
     public static void beforeAll() {
         mockCredentialsVerifier = mock(CredentialsVerifier.class);
         mockPixelPass = mock(PixelPass.class);
-        service = new VCVerificationServiceImpl(mockCredentialsVerifier,mockPixelPass);
+        mockTrustRegistryService = mock(TrustRegistryService.class);
+        when(mockTrustRegistryService.isEnabled()).thenReturn(false);
+        service = new VCVerificationServiceImpl(mockCredentialsVerifier, mockPixelPass, mockTrustRegistryService);
     }
 
     @Nested

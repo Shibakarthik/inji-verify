@@ -8,6 +8,8 @@ import io.inji.verify.dto.verification.ExpiryCheckDto;
 import io.inji.verify.dto.verification.StatusCheckDto;
 import io.inji.verify.exception.CredentialStatusCheckException;
 import io.inji.verify.services.VCVerificationService;
+import io.inji.verify.trustregistry.TrustRegistryService;
+import io.inji.verify.dto.verification.IssuerAuthorizationCheckDto;
 import io.inji.verify.shared.Constants;
 import io.inji.verify.utils.Utils;
 import io.mosip.pixelpass.PixelPass;
@@ -16,6 +18,7 @@ import io.mosip.vercred.vcverifier.constants.CredentialFormat;
 import io.mosip.vercred.vcverifier.data.CredentialStatusResult;
 import io.mosip.vercred.vcverifier.data.CredentialVerificationSummary;
 import io.mosip.vercred.vcverifier.data.VerificationResult;
+import io.mosip.vercred.vcverifier.data.VerificationStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,10 +40,13 @@ public class VCVerificationServiceImpl implements VCVerificationService {
 
     private final CredentialsVerifier credentialsVerifier;
     private final PixelPass pixelPass;
+    private final TrustRegistryService trustRegistryService;
 
-    public VCVerificationServiceImpl(CredentialsVerifier credentialsVerifier, PixelPass pixelPass) {
+    public VCVerificationServiceImpl(CredentialsVerifier credentialsVerifier, PixelPass pixelPass,
+                                     TrustRegistryService trustRegistryService) {
         this.credentialsVerifier = credentialsVerifier;
         this.pixelPass = pixelPass;
+        this.trustRegistryService = trustRegistryService;
     }
 
     @Override
@@ -61,7 +67,12 @@ public class VCVerificationServiceImpl implements VCVerificationService {
         CredentialVerificationSummary credentialVerificationSummary =
                 credentialsVerifier.verifyAndGetCredentialStatus(vc, format, statusPurposeList);
         log.debug("CredentialVerificationResult: {}", credentialVerificationSummary.getVerificationResult());
-        return new VCVerificationStatusDto(Utils.getVcVerificationStatus(credentialVerificationSummary));
+        VerificationStatus status = Utils.getVcVerificationStatus(credentialVerificationSummary);
+        IssuerAuthorizationCheckDto issuerAuthorizationCheck = trustRegistryService.checkIssuerAuthorization(vc, format);
+        if (!isIssuerAuthorizationSuccessful(issuerAuthorizationCheck)) {
+            status = VerificationStatus.INVALID;
+        }
+        return new VCVerificationStatusDto(status);
     }
 
     @Override
@@ -74,6 +85,9 @@ public class VCVerificationServiceImpl implements VCVerificationService {
         ExpiryCheckDto expiryCheck = null;
         List<StatusCheckDto> statusCheck = List.of();
         Map<String, Object> claims = Map.of();
+
+        IssuerAuthorizationCheckDto issuerAuthorizationCheck =
+                trustRegistryService.checkIssuerAuthorization(verifiableCredential, format);
 
         boolean skipStatusChecks = request.isSkipStatusChecks();
             if (skipStatusChecks) {
@@ -93,8 +107,19 @@ public class VCVerificationServiceImpl implements VCVerificationService {
             claims = request.isIncludeClaims() ? extractClaims(verifiableCredential, format, claimsWithMetaData, pixelPass) : Map.of();
         }
 
-        boolean allChecksSuccessful = populateAllChecksSuccessful(schemaAndSignatureCheck, expiryCheck, statusCheck, null);
+        boolean allChecksSuccessful = populateAllChecksSuccessful(schemaAndSignatureCheck, expiryCheck, statusCheck, null)
+                && isIssuerAuthorizationSuccessful(issuerAuthorizationCheck);
 
-        return new VCVerificationResultDto(allChecksSuccessful, schemaAndSignatureCheck, expiryCheck, statusCheck, claims);
+        VCVerificationResultDto result = new VCVerificationResultDto(allChecksSuccessful, schemaAndSignatureCheck,
+                expiryCheck, statusCheck, claims, issuerAuthorizationCheck);
+        result.setIssuerAuthorizationCheck(issuerAuthorizationCheck);
+        return result;
+    }
+    public IssuerAuthorizationCheckDto checkIssuerAuthorization(String credential, CredentialFormat format) {
+        return trustRegistryService.checkIssuerAuthorization(credential, format);
+    }
+
+    public boolean isIssuerAuthorizationSuccessful(IssuerAuthorizationCheckDto result) {
+        return !trustRegistryService.isEnabled() || (result != null && Boolean.TRUE.equals(result.getAuthorised()));
     }
 }

@@ -61,6 +61,13 @@ image:
   #   - myRegistryKeySecretName
 ## Port on which this particular spring service module is running.
 springServicePort: 8080
+
+## Optional issuer authorization checks against an external A.2 Trust Registry
+trustRegistry:
+  enabled: false
+  baseUrl: ""
+  connectTimeout: 3000
+  readTimeout: 3000
 ## Configure extra options for liveness and readiness probes
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
 ##

@@ -71,6 +71,7 @@ public class VerifiablePresentationSubmissionServiceImplTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(vcVerificationService.isIssuerAuthorizationSuccessful(nullable(io.inji.verify.dto.verification.IssuerAuthorizationCheckDto.class))).thenReturn(true);
         verifiablePresentationSubmissionService = new VerifiablePresentationSubmissionServiceImpl(vpSubmissionRepository, credentialsVerifier, presentationVerifier, verifiablePresentationRequestService, vcVerificationService, pixelPass);
     }
 
