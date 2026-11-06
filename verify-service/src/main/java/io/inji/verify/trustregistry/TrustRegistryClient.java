@@ -2,7 +2,6 @@ package io.inji.verify.trustregistry;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -20,7 +19,7 @@ public class TrustRegistryClient {
             @Value("${inji.verify.trust-registry.base-url:}") String baseUrl,
             @Value("${inji.verify.trust-registry.connect-timeout:3000}") int connectTimeout,
             @Value("${inji.verify.trust-registry.read-timeout:3000}") int readTimeout) {
-        this.baseUrl = baseUrl;
+        this.baseUrl = baseUrl == null ? null : baseUrl.replaceAll("/+$", "");
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(connectTimeout);
         requestFactory.setReadTimeout(readTimeout);
