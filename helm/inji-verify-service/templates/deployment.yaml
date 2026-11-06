@@ -90,6 +90,14 @@ spec:
               value: {{ .Values.containerSecurityContext.runAsUser | quote }}
             - name: JDK_JAVA_OPTIONS
               value: {{ .Values.additionalResources.javaOpts | quote }}
+            - name: INJI_VERIFY_TRUST_REGISTRY_ENABLED
+              value: {{ .Values.trustRegistry.enabled | quote }}
+            - name: INJI_VERIFY_TRUST_REGISTRY_BASE_URL
+              value: {{ .Values.trustRegistry.baseUrl | quote }}
+            - name: INJI_VERIFY_TRUST_REGISTRY_CONNECT_TIMEOUT
+              value: {{ .Values.trustRegistry.connectTimeout | quote }}
+            - name: INJI_VERIFY_TRUST_REGISTRY_READ_TIMEOUT
+              value: {{ .Values.trustRegistry.readTimeout | quote }}
             {{- if .Values.extraEnv }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnv "context" $) | nindent 12 }}
             {{- end }}
