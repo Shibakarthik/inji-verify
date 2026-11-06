@@ -17,4 +17,5 @@ public class VCVerificationResultDto {
     private ExpiryCheckDto expiryCheck;
     private List<StatusCheckDto> statusCheck;
     private Map<String, Object> claims;
+    private IssuerAuthorizationCheckDto issuerAuthorizationCheck;
 }
