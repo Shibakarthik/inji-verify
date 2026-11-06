@@ -105,7 +105,7 @@ public class VCVerificationServiceImpl implements VCVerificationService {
                 && isIssuerAuthorizationSuccessful(issuerAuthorizationCheck);
 
         VCVerificationResultDto result = new VCVerificationResultDto(allChecksSuccessful, schemaAndSignatureCheck,
-                expiryCheck, statusCheck, claims);
+                expiryCheck, statusCheck, claims, issuerAuthorizationCheck);
         result.setIssuerAuthorizationCheck(issuerAuthorizationCheck);
         return result;
     }
