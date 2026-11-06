@@ -32,3 +32,20 @@ The link to set up guide can be found [here](../Readme.md).
 ##### API docs
 
 The API docs are published in Stoplight, which can be found [here](https://mosip.stoplight.io/docs/inji-verify/branches/main).
+
+
+### Optional Trust Registry integration (A.2)
+
+The backend can check issuer authorization against an external Inji Trust Registry during credential verification. The integration is disabled by default to preserve existing deployments. When enabled, a registry timeout or an indeterminate response fails the issuer authorization check; it is never treated as authorization.
+
+For Helm deployments, configure the `trustRegistry` values in `helm/inji-verify-service/values.yaml`:
+
+```yaml
+trustRegistry:
+  enabled: true
+  baseUrl: "https://trust-registry.example.org"
+  connectTimeout: 3000
+  readTimeout: 3000
+```
+
+The URL must be reachable from the Verify backend pod. The public registry check endpoint is used; no Trust Registry administrator credentials are required. The initial implementation extracts issuer DID and the first application-specific type from JSON-LD credentials. Other credential formats currently return an explicit unsupported-format result when the integration is enabled.
