@@ -101,6 +101,7 @@ public class VerifiablePresentationSubmissionServiceImpl implements VerifiablePr
                     List<VCResultDto> vcResults = new ArrayList<>();
                     for (var vcResult : vcResultsWithStatus) {
                         VerificationStatus vcStatus = Utils.applyRevocationStatus(vcResult.getStatus(), vcResult.getCredentialStatus());
+                        vcStatus = applyIssuerAuthorizationStatus(vcResult.getVc(), CredentialFormat.LDP_VC, vcStatus);
                         vcResults.add(new VCResultDto(vcResult.getVc(), vcStatus));
                     }
                     verificationResults.addAll(vcResults);
@@ -250,6 +251,11 @@ public class VerifiablePresentationSubmissionServiceImpl implements VerifiablePr
         return Optional.ofNullable(request.getAuthorizationDetails()).map(AuthorizationRequestResponseDto::isAcceptVPWithoutHolderProof).orElse(false);
     }
 
+    private VerificationStatus applyIssuerAuthorizationStatus(String vc, CredentialFormat format, VerificationStatus originalStatus) {
+        IssuerAuthorizationCheckDto check = vcVerificationService.checkIssuerAuthorization(vc, format);
+        return vcVerificationService.isIssuerAuthorizationSuccessful(check) ? originalStatus : VerificationStatus.INVALID;
+    }
+
     private void addVerificationResults(String vc, List<VCResultDto> verificationResults, CredentialFormat credentialFormat) {
         List<String> statusPurposeList = new ArrayList<>();
         statusPurposeList.add(Constants.STATUS_PURPOSE_REVOKED);
@@ -260,6 +266,7 @@ public class VerifiablePresentationSubmissionServiceImpl implements VerifiablePr
             log.error("VC verification result errors : {} {}", verificationResult.getVerificationErrorCode(), verificationResult.getVerificationMessage());
         }
         VerificationStatus status = Utils.getVcVerificationStatus(credentialVerificationSummary);
+        status = applyIssuerAuthorizationStatus(vc, credentialFormat, status);
         verificationResults.add(new VCResultDto(vc, status));
     }
 
