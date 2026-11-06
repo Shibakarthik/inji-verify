@@ -18,6 +18,7 @@ import io.mosip.vercred.vcverifier.constants.CredentialFormat;
 import io.mosip.vercred.vcverifier.data.CredentialStatusResult;
 import io.mosip.vercred.vcverifier.data.CredentialVerificationSummary;
 import io.mosip.vercred.vcverifier.data.VerificationResult;
+import io.mosip.vercred.vcverifier.data.VerificationStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -66,7 +67,12 @@ public class VCVerificationServiceImpl implements VCVerificationService {
         CredentialVerificationSummary credentialVerificationSummary =
                 credentialsVerifier.verifyAndGetCredentialStatus(vc, format, statusPurposeList);
         log.debug("CredentialVerificationResult: {}", credentialVerificationSummary.getVerificationResult());
-        return new VCVerificationStatusDto(Utils.getVcVerificationStatus(credentialVerificationSummary));
+        VerificationStatus status = Utils.getVcVerificationStatus(credentialVerificationSummary);
+        IssuerAuthorizationCheckDto issuerAuthorizationCheck = trustRegistryService.checkIssuerAuthorization(vc, format);
+        if (!isIssuerAuthorizationSuccessful(issuerAuthorizationCheck)) {
+            status = VerificationStatus.INVALID;
+        }
+        return new VCVerificationStatusDto(status);
     }
 
     @Override
